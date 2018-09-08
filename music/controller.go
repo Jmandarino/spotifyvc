@@ -9,6 +9,7 @@ import (
 	"os"
 	"log"
 	"fmt"
+	"path/filepath"
 )
 
 type Controller struct {
@@ -16,8 +17,13 @@ type Controller struct {
 }
 
 func getSpotifyClient() (spotify.Client, error){
-	err := godotenv.Load() //use .env for env files
+	parent, err := os.Getwd()
+	path := os.ExpandEnv(filepath.Join(filepath.Dir(parent), ".env"))
+	err = godotenv.Load(path)//use .env for env files
 
+	if err != nil{
+
+	}
 	config := &clientcredentials.Config{
 		ClientID:     os.Getenv("SPOTIFY_ID"),
 		ClientSecret: os.Getenv("SPOTIFY_SECRET"),
@@ -34,6 +40,21 @@ func getSpotifyClient() (spotify.Client, error){
 
 	return client, err
 
+}
+
+func trackNewPlaylist(client spotify.Client, userName string,  p_id spotify.ID, )bool{
+
+	results, err := client.GetPlaylistTracks(userName, p_id)
+
+	if err != nil {
+		log.Fatal("Couldn't get playlist: %v", p_id)
+	}
+
+	for _, item := range results.Tracks{
+		println(item.Track.Name)
+	}
+
+	return true
 }
 
 
