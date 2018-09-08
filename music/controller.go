@@ -10,6 +10,8 @@ import (
 	"log"
 	"fmt"
 	"path/filepath"
+	"gopkg.in/mgo.v2/bson"
+	"time"
 )
 
 type Controller struct {
@@ -50,9 +52,32 @@ func trackNewPlaylist(client spotify.Client, userName string,  p_id spotify.ID, 
 		log.Fatal("Couldn't get playlist: %v", p_id)
 	}
 
+	var p_list playlist
+	p_list.ID = bson.NewObjectId()
+	p_list.UserId = userName
+	p_list.PlaylistId = p_id.String()
+
+	var ver version
+
+	ver.ID = bson.NewObjectId()
+	ver.Edited = time.Now()
+	ver.ChangeType = "ADD"
+
 	for _, item := range results.Tracks{
-		println(item.Track.Name)
+		var s song
+		s.SongId = item.Track.ID.String()
+		for _, artist := range item.Track.Artists{
+			s.Artists = append(s.Artists, artist.Name)
+		}
+		s.Title = item.Track.Name
+		song := DBconnection{}.GetOrCreateSong(s)
+
+		p_list.Songs = append(p_list.Songs, song.ID)
+		ver.Songs = append(ver.Songs, song.ID)
 	}
+	p_list.Versions = append(p_list.Versions, ver.ID)
+	DBconnection{}.InsertVersion(ver)
+	DBconnection{}.InsertPlaylist(p_list)
 
 	return true
 }

@@ -9,7 +9,7 @@ type song struct {
 ID bson.ObjectId `json:"id" bson:"_id"`
 SongId string `json:"songId" bson:"songId"`
 Title string `json:"title" bson:"title"`
-Author string `json:"author" bson:"author"`
+Artists []string `json:"artists" bson:"artists"`
 Edited time.Time `json:"edited" bson:"edited"`
 }
 
