@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"gopkg.in/mgo.v2/bson"
 	"time"
+	"io/ioutil"
+	"encoding/json"
 )
 
 type Controller struct {
@@ -88,6 +90,52 @@ func (c *Controller) Index(w http.ResponseWriter, r *http.Request){
 	//playlists := c.DBconnection.InsertSong()
 	fmt.Print("Hello world")
 	return
+}
+
+type PlaylistTrack struct {
+	User string `json:"user"`
+	PId string `json:"pid"`
+}
+
+func (c *Controller) TrackPlaylist(w http.ResponseWriter, r *http.Request){
+	b, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	// Unmarshal
+	var postData PlaylistTrack
+	err = json.Unmarshal(b, &postData)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	// check if playlist is tracked, else track it
+	plist, err := DBconnection{}.GetPlaylistByPlaylistId(postData.User, postData.PId)
+
+	if err == nil {
+		//playlist is already found, return playlist data
+		w.Header().Set("content-type", "application/json")
+		output, err := json.Marshal(plist)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		w.Header().Set("content-type", "application/json")
+		w.Write(output)
+		return
+	}
+
+	output, err := json.Marshal(postData)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	w.Header().Set("content-type", "application/json")
+	w.Write(output)
 }
 
 

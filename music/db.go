@@ -4,6 +4,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"log"
 	"gopkg.in/mgo.v2/bson"
+	"errors"
 )
 
 
@@ -98,4 +99,21 @@ func (db DBconnection) GetOrCreateSong(s song) song{
 	err = c.Find(bson.M{"songId":s.SongId}).One(&s_)
 
 	return s_
+}
+
+func (db DBconnection) GetPlaylistByPlaylistId(userId string, playlistId string) (p playlist, err error){
+	session, err := mgo.Dial(SERVER)
+	if err != nil {
+		log.Fatal("Can't connec to DB")
+	}
+	defer session.Close()
+	c := session.DB(DBNAME).C(COLLECTIONPLIST)
+
+	var result []playlist
+	err = c.Find(bson.M{"userId":userId, "playlistId":playlistId}).All(&result)
+
+	if len(result) == 0 {
+		return p, errors.New("playlist not found")
+	}
+	return result[0], nil
 }

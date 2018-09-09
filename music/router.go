@@ -25,6 +25,12 @@ var routes = Routes {
 		"/",
 		controller.Index,
 	},
+	Route {
+		"TrackPlaylist",
+		"POST",
+		"/track",
+		controller.TrackPlaylist,
+	},
 }
 
 func NewRouter() *mux.Router{
