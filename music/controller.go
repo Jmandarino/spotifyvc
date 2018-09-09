@@ -75,8 +75,8 @@ func trackNewPlaylist(client spotify.Client, userName string,  p_id spotify.ID, 
 		p_list.Songs = append(p_list.Songs, song.ID)
 		ver.Songs = append(ver.Songs, song.ID)
 	}
-	p_list.Versions = append(p_list.Versions, ver.ID)
 	DBconnection{}.InsertVersion(ver)
+	p_list.Versions = append(p_list.Versions, ver.ID)
 	DBconnection{}.InsertPlaylist(p_list)
 
 	return true
