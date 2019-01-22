@@ -14,6 +14,7 @@ import (
 	"time"
 	"io/ioutil"
 	"encoding/json"
+	"errors"
 )
 
 type Controller struct {
@@ -22,7 +23,7 @@ type Controller struct {
 
 func getSpotifyClient() (spotify.Client, error){
 	parent, err := os.Getwd()
-	path := os.ExpandEnv(filepath.Join(filepath.Dir(parent), ".env"))
+	path := os.ExpandEnv(filepath.Join(parent, ".env"))
 	err = godotenv.Load(path)//use .env for env files
 
 	if err != nil{
@@ -46,18 +47,20 @@ func getSpotifyClient() (spotify.Client, error){
 
 }
 
-func trackNewPlaylist(client spotify.Client, userName string,  p_id spotify.ID, )bool{
+func trackNewPlaylist(client spotify.Client, userName string,  p_id spotify.ID, ) (p playlist, err error){
 
-	results, err := client.GetPlaylistTracks(userName, p_id)
+	result, err := client.GetPlaylist(userName, p_id)
 
 	if err != nil {
 		log.Fatal("Couldn't get playlist: %v", p_id)
+		return p, errors.New("spotify error, couldn't get playlist")
 	}
 
 	var p_list playlist
 	p_list.ID = bson.NewObjectId()
 	p_list.UserId = userName
 	p_list.PlaylistId = p_id.String()
+	p_list.Name = result.Name
 
 	var ver version
 
@@ -65,7 +68,7 @@ func trackNewPlaylist(client spotify.Client, userName string,  p_id spotify.ID, 
 	ver.Edited = time.Now()
 	ver.ChangeType = "ADD"
 
-	for _, item := range results.Tracks{
+	for _, item := range result.Tracks.Tracks{
 		var s song
 		s.SongId = item.Track.ID.String()
 		for _, artist := range item.Track.Artists{
@@ -81,7 +84,7 @@ func trackNewPlaylist(client spotify.Client, userName string,  p_id spotify.ID, 
 	p_list.Versions = append(p_list.Versions, ver.ID)
 	DBconnection{}.InsertPlaylist(p_list)
 
-	return true
+	return p_list, nil
 }
 
 
@@ -94,7 +97,7 @@ func (c *Controller) Index(w http.ResponseWriter, r *http.Request){
 
 type PlaylistTrack struct {
 	User string `json:"user"`
-	PId string `json:"pid"`
+	PId spotify.ID `json:"pid"`
 }
 
 func (c *Controller) TrackPlaylist(w http.ResponseWriter, r *http.Request){
@@ -114,11 +117,10 @@ func (c *Controller) TrackPlaylist(w http.ResponseWriter, r *http.Request){
 	}
 
 	// check if playlist is tracked, else track it
-	plist, err := DBconnection{}.GetPlaylistByPlaylistId(postData.User, postData.PId)
+	plist, err := DBconnection{}.GetPlaylistByPlaylistId(postData.User, postData.PId.String())
 
 	if err == nil {
 		//playlist is already found, return playlist data
-		w.Header().Set("content-type", "application/json")
 		output, err := json.Marshal(plist)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
@@ -128,6 +130,15 @@ func (c *Controller) TrackPlaylist(w http.ResponseWriter, r *http.Request){
 		w.Write(output)
 		return
 	}
+
+	client, err := getSpotifyClient()
+
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	plist, err = trackNewPlaylist(client, postData.User, postData.PId)
+	//start tracking a playlist
 
 	output, err := json.Marshal(postData)
 	if err != nil {
