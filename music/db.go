@@ -117,3 +117,19 @@ func (db DBconnection) GetPlaylistByPlaylistId(userId string, playlistId string)
 	}
 	return result[0], nil
 }
+
+func (db DBconnection) GetAllPlaylists() ([]playlist, error) {
+	session, err := mgo.Dial(SERVER)
+	session.SetMode(mgo.Monotonic, true)
+
+	if err != nil {
+		log.Fatal("Can't connec to DB")
+	}
+	defer session.Close()
+	c := session.DB(DBNAME).C(COLLECTIONPLIST)
+
+	result := []playlist{}
+	err = c.Find(bson.M{}).All(&result)
+
+	return result, nil
+}
