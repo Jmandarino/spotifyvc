@@ -18,3 +18,6 @@ Returns: 200 response and prints "hello world" to console
 
 
 Returns: 200 response of posted value adds playlist to the db. 
+
+Helpful links
+- https://gist.github.com/harlow/dbcd639cf8d396a2ab73
