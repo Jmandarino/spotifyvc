@@ -1,12 +1,14 @@
 package main
 
 import (
+	"github.com/gorilla/handlers"
+	"github.com/jmandarino/spotifyvc/music"
 	"log"
 	"net/http"
-	"github.com/gorilla/handlers"
-	"awesomeProject/music"
 )
+
 const PORT = "8080"
+
 func main() {
 	//err := godotenv.Load() //use .env for env files
 
@@ -36,7 +38,6 @@ func main() {
 	//	fmt.Println(item.Track.Name)
 	//}
 
-
 	router := music.NewRouter()
 
 	// These two lines are important in order to allow access from the front-end side to the methods
@@ -44,12 +45,9 @@ func main() {
 	allowedMethods := handlers.AllowedMethods([]string{"GET", "POST", "DELETE", "PUT"})
 
 	// Launch server with CORS validations
-	log.Fatal(http.ListenAndServe(":" + PORT, handlers.CORS(allowedOrigins, allowedMethods)(router)))
+	log.Fatal(http.ListenAndServe(":"+PORT, handlers.CORS(allowedOrigins, allowedMethods)(router)))
 
 }
-
-
-
 
 //func handleInsert(db *mgo.Session){
 //	db = db.Copy()

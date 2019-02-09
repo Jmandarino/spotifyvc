@@ -1,17 +1,20 @@
-Plist
-songs []songs
-versions []v_id
-id
-spot_id
 
-songs
-id
-spot_id
-...
+Basics:
 
-version
-Change: (add|remove|)
-songs []song_id
-date
+place folder in go/src/github.com/jmandarino/spotifyvc
 
-TODO: better structure for tests
+setup mongodb 
+
+run
+
+Current HTTP Methods:
+
+`GET` `/` -- test method
+
+Returns: 200 response and prints "hello world" to console
+
+
+`POST` `/track` -- track a playlist
+
+
+Returns: 200 response of posted value adds playlist to the db. 
