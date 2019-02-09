@@ -1,32 +1,32 @@
 package music
 
 import (
-	"net/http"
 	"context"
-	"github.com/zmb3/spotify"
-	"github.com/joho/godotenv"
-	"golang.org/x/oauth2/clientcredentials"
-	"os"
-	"log"
-	"fmt"
-	"path/filepath"
-	"gopkg.in/mgo.v2/bson"
-	"time"
-	"io/ioutil"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"github.com/joho/godotenv"
+	"github.com/zmb3/spotify"
+	"golang.org/x/oauth2/clientcredentials"
+	"gopkg.in/mgo.v2/bson"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+	"path/filepath"
+	"time"
 )
 
 type Controller struct {
 	DBconnection DBconnection
 }
 
-func getSpotifyClient() (spotify.Client, error){
+func getSpotifyClient() (spotify.Client, error) {
 	parent, err := os.Getwd()
 	path := os.ExpandEnv(filepath.Join(parent, ".env"))
-	err = godotenv.Load(path)//use .env for env files
+	err = godotenv.Load(path) //use .env for env files
 
-	if err != nil{
+	if err != nil {
 
 	}
 	config := &clientcredentials.Config{
@@ -47,9 +47,9 @@ func getSpotifyClient() (spotify.Client, error){
 
 }
 
-func trackNewPlaylist(client spotify.Client, userName string,  p_id spotify.ID, ) (p playlist, err error){
+func trackNewPlaylist(client spotify.Client, userName string, p_id spotify.ID) (p playlist, err error) {
 
-	result, err := client.GetPlaylist(userName, p_id)
+	result, err := client.GetPlaylist(p_id)
 
 	if err != nil {
 		log.Fatal("Couldn't get playlist: %v", p_id)
@@ -68,10 +68,10 @@ func trackNewPlaylist(client spotify.Client, userName string,  p_id spotify.ID, 
 	ver.Edited = time.Now()
 	ver.ChangeType = "ADD"
 
-	for _, item := range result.Tracks.Tracks{
+	for _, item := range result.Tracks.Tracks {
 		var s song
 		s.SongId = item.Track.ID.String()
-		for _, artist := range item.Track.Artists{
+		for _, artist := range item.Track.Artists {
 			s.Artists = append(s.Artists, artist.Name)
 		}
 		s.Title = item.Track.Name
@@ -87,20 +87,20 @@ func trackNewPlaylist(client spotify.Client, userName string,  p_id spotify.ID, 
 	return p_list, nil
 }
 
-
-
-func (c *Controller) Index(w http.ResponseWriter, r *http.Request){
+func (c *Controller) Index(w http.ResponseWriter, r *http.Request) {
 	//playlists := c.DBconnection.InsertSong()
 	fmt.Print("Hello world")
 	return
 }
 
 type PlaylistTrack struct {
-	User string `json:"user"`
-	PId spotify.ID `json:"pid"`
+	// user == username
+	// pid == the playlist id that spotify gives a playlist
+	User string     `json:"user"`
+	PId  spotify.ID `json:"pid"`
 }
 
-func (c *Controller) TrackPlaylist(w http.ResponseWriter, r *http.Request){
+func (c *Controller) TrackPlaylist(w http.ResponseWriter, r *http.Request) {
 	b, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
@@ -148,6 +148,3 @@ func (c *Controller) TrackPlaylist(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("content-type", "application/json")
 	w.Write(output)
 }
-
-
-

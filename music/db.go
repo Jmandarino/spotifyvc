@@ -1,13 +1,12 @@
 package music
 
 import (
-	"gopkg.in/mgo.v2"
-	"log"
-	"gopkg.in/mgo.v2/bson"
 	"errors"
+	"fmt"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
+	"log"
 )
-
-
 
 // SERVER the DB server
 const SERVER = "localhost"
@@ -20,13 +19,9 @@ const COLLECTIONSONG = "songs"
 const COLLECTIONPLIST = "playlists"
 const COLLECTIONVERSION = "versions"
 
-type DBconnection struct {}
+type DBconnection struct{}
 
-
-
-
-
-func (db DBconnection) InsertSong(song song) bool{
+func (db DBconnection) InsertSong(song song) bool {
 	session, err := mgo.Dial(SERVER)
 
 	if err != nil {
@@ -43,8 +38,7 @@ func (db DBconnection) InsertSong(song song) bool{
 	return true
 }
 
-
-func (db DBconnection) InsertPlaylist(p playlist) bool{
+func (db DBconnection) InsertPlaylist(p playlist) bool {
 	session, err := mgo.Dial(SERVER)
 
 	if err != nil {
@@ -59,7 +53,7 @@ func (db DBconnection) InsertPlaylist(p playlist) bool{
 
 }
 
-func (db DBconnection) InsertVersion(v version) bool{
+func (db DBconnection) InsertVersion(v version) bool {
 	session, err := mgo.Dial(SERVER)
 
 	if err != nil {
@@ -74,8 +68,7 @@ func (db DBconnection) InsertVersion(v version) bool{
 
 }
 
-
-func (db DBconnection) GetOrCreateSong(s song) song{
+func (db DBconnection) GetOrCreateSong(s song) song {
 	session, err := mgo.Dial(SERVER)
 	if err != nil {
 		log.Fatal("Can't connec to DB")
@@ -85,7 +78,7 @@ func (db DBconnection) GetOrCreateSong(s song) song{
 	var s_ song
 
 	c := session.DB(DBNAME).C(COLLECTIONSONG)
-	count, err := c.Find(bson.M{"songId":s.SongId}).Count()//.One(&s_)
+	count, err := c.Find(bson.M{"songId": s.SongId}).Count() //.One(&s_)
 
 	if err != nil {
 		log.Fatal("DB error with GetOrCreateSong")
@@ -96,12 +89,12 @@ func (db DBconnection) GetOrCreateSong(s song) song{
 		c.Insert(&s)
 		return s
 	}
-	err = c.Find(bson.M{"songId":s.SongId}).One(&s_)
+	err = c.Find(bson.M{"songId": s.SongId}).One(&s_)
 
 	return s_
 }
 
-func (db DBconnection) GetPlaylistByPlaylistId(userId string, playlistId string) (p playlist, err error){
+func (db DBconnection) GetPlaylistByPlaylistId(userId string, playlistId string) (p playlist, err error) {
 	session, err := mgo.Dial(SERVER)
 	if err != nil {
 		log.Fatal("Can't connec to DB")
@@ -110,10 +103,30 @@ func (db DBconnection) GetPlaylistByPlaylistId(userId string, playlistId string)
 	c := session.DB(DBNAME).C(COLLECTIONPLIST)
 
 	var result []playlist
-	err = c.Find(bson.M{"userId":userId, "playlistId":playlistId}).All(&result)
+	err = c.Find(bson.M{"userId": userId, "playlistId": playlistId}).All(&result)
 
 	if len(result) == 0 {
 		return p, errors.New("playlist not found")
 	}
 	return result[0], nil
+}
+
+func (db DBconnection) GetAllSongs() []song {
+	//FIXME: this will prob fail if the list is too big
+	session, err := mgo.Dial(SERVER)
+
+	if err != nil {
+		fmt.Print("error in works dialing server")
+	}
+
+	defer session.Close()
+	var results []song
+	c := session.DB(DBNAME).C(COLLECTIONSONG)
+
+	err = c.Find(nil).All(&results)
+	if err != nil {
+		log.Fatal()
+	}
+
+	return results
 }
